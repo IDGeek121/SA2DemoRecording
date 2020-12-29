@@ -15,7 +15,7 @@ public:
 
 public:
 	ReplayMeta()
-		: name(nullptr), description(nullptr), upgradeBitfield(0), character_p1(0), character_p2(0), framecount(0), level(0), file(nullptr)
+		: name(), description(), upgradeBitfield(0), character_p1(0), character_p2(0), framecount(0), level(0), file()
 	{
 	}
 	ReplayMeta(const char* filename);

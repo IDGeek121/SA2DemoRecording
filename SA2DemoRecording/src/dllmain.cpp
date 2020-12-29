@@ -16,6 +16,8 @@ char* replayNamePointer = (char*)&replayName;
 char replayNameInGame[256] = { 0 };
 char* replayNameInGamePointer = (char*)&replayNameInGame;
 
+extern ReplayMeta currentReplay;
+
 FunctionPointer(int, sa2_sprintf, (char*, const char*, ...), 0x7a7c6d);
 FunctionPointer(void, FUN_0043d5d0, (), 0x0043d5d0);
 
@@ -105,7 +107,7 @@ void __cdecl write_replay_buffer_thunk()
 		PrintDebug("Writing demo file to %s", replayname.c_str());
 		write_replay_buffer(replayname.c_str());
 		PrintDebug("Writing demo metafile to %s", metaname.c_str());
-		ReplayMeta::write_replay_metafile("test", "test", MainCharObj2[0]->Upgrades, CurrentCharacter, CurrentLevel, FrameCount, filename.str().c_str(), metaname.c_str());
+		ReplayMeta::write_replay_metafile("test", "test", currentReplay.upgradeBitfield, CurrentCharacter, CurrentLevel, FrameCount, filename.str().c_str(), metaname.c_str());
 		DemoState = 0;
 	}
 }
@@ -333,6 +335,165 @@ void __declspec(naked) load_demo_thunk_2()
 	}
 }
 
+void upgrade_assignment()
+{
+	switch (DemoState)
+	{
+	case 1:
+	{
+		if (isLoadingCustomDemo)
+		{
+			// Apply upgrades to the character
+			MainCharObj2[0]->Upgrades = currentReplay.upgradeBitfield;
+
+			// To get the upgrade platforms to work, we need to set the appropriate byte
+			// in the save data
+			UINT32 workingBitfield = currentReplay.upgradeBitfield;
+			char *upgradePointer = nullptr, *upgradeEnd = nullptr;
+
+			// Set the start/end pointer for UpgradeGot bytes, and shift the upgrade
+			// bitfield to the starting bit of the appropriate character's upgrades
+			switch (MainCharObj2[0]->CharID)
+			{
+			case Characters_Sonic:
+			{
+				upgradePointer = &SonicLightShoesGot;
+				upgradeEnd = upgradePointer + 6;
+				break;
+			}
+			case Characters_Shadow:
+			{
+				upgradePointer = &ShadowAirShoesGot;
+				upgradeEnd = upgradePointer + 4;
+				workingBitfield >>= 16;
+				break;
+			}
+			case Characters_Knuckles:
+			{
+				upgradePointer = &KnucklesShovelClawGot;
+				upgradeEnd = upgradePointer + 5;
+				workingBitfield >>= 10;
+				break;
+			}
+			case Characters_Rouge:
+			{
+				upgradePointer = &RougePickNailsGot;
+				upgradeEnd = upgradePointer + 4;
+				workingBitfield >>= 25;
+				break;
+			}
+			case Characters_MechTails:
+			{
+				upgradePointer = &TailsBoosterGot;
+				upgradeEnd = upgradePointer + 4;
+				workingBitfield >>= 6;
+				break;
+			}
+			case Characters_MechEggman:
+			{
+				upgradePointer = &EggmanJetEngineGot;
+				upgradeEnd = upgradePointer + 5;
+				workingBitfield >>= 20;
+				break;
+			}
+			default: break;
+			}
+
+			// Upgrades map 1:1 between bitfield and byte flags. Set byte to
+			// bit and shift the working bitfield
+			for (upgradePointer; upgradePointer < upgradeEnd; upgradePointer++)
+			{
+				*upgradePointer = (char)(workingBitfield & 0x1);
+				workingBitfield >>= 1;
+			}
+		}
+		else
+		{
+			switch (MainCharObj2[0]->CharID)
+			{
+			case Characters_Sonic:
+			{
+				MainCharObj2[0]->Upgrades = 0x1;
+				break;
+			}
+			case Characters_Shadow:
+			{
+				MainCharObj2[0]->Upgrades = 0x10000;
+				break;
+			}
+			case Characters_Knuckles:
+			{
+				MainCharObj2[0]->Upgrades = 0x400;
+				break;
+			}
+			case Characters_Rouge:
+			{
+				MainCharObj2[0]->Upgrades = 0x2000000;
+				break;
+			}
+			case Characters_MechTails:
+			{
+				MainCharObj2[0]->Upgrades = 0x40;
+				break;
+			}
+			case Characters_MechEggman:
+			{
+				MainCharObj2[0]->Upgrades = 0x100000;
+				break;
+			}
+			default: break;
+			}
+		}
+		break;
+	}
+	case 2:
+	{
+		currentReplay.upgradeBitfield = MainCharObj2[0]->Upgrades;
+		break;
+	}
+	default: break;
+	}
+}
+
+void __declspec(naked) upgrade_assignment_helper_andknuckles()
+{
+	// Uses a jump, but we're gonna fix it so it looks like a call
+	__asm
+	{
+		// Replace clobbered instructions
+		pop edi
+		pop esi
+
+		push 0x00728411 // set return address so it's like a function call
+
+		pushfd
+		pushad
+	}
+	upgrade_assignment();
+	__asm
+	{
+		popad
+		popfd
+		ret
+	}
+}
+
+void __declspec(naked) upgrade_assignment_helper()
+{
+	__asm
+	{
+		pushfd
+		pushad
+	}
+	upgrade_assignment();
+	__asm
+	{
+		popad
+		popfd
+		ret
+	}
+}
+
 extern "C"
 {
 	__declspec(dllexport) ModInfo SA2ModInfo = { ModLoaderVer };
@@ -368,15 +529,23 @@ extern "C"
 		WriteJump((void*)0x0045458f, load_demo_thunk);
 		WriteJump((void*)0x004545a9, load_demo_thunk_2);
 
-		// NOP all code that forces upgrade values
-		WriteData<7>((void*)0x00717090, (char)0x90); // Sonic
-		WriteData<7>((void*)0x007175f0, (char)0x90); // Shadow
+		// Call our custom function for setting upgrades, and NOP as appropriate
+		WriteCall((void*)0x00717090, upgrade_assignment_helper); // Sonic
+		WriteData<2>((void*)0x00717095, (char)0x90);
 
-		WriteData<3>((void*)0x0072840c, (char)0x90); // Knuckles
-		WriteData<7>((void*)0x00728855, (char)0x90); // Rouge
+		WriteCall((void*)0x007175f0, upgrade_assignment_helper); // Shadow
+		WriteData<2>((void*)0x007175f5, (char)0x90);
 
-		WriteData<7>((void*)0x00740e47, (char)0x90); // EWalker
-		WriteData<7>((void*)0x007410a7, (char)0x90); // TWalker
+		WriteJump((void*)0x0072840c, upgrade_assignment_helper_andknuckles); // Knuckles needs a little help :)
+
+		WriteCall((void*)0x00728855, upgrade_assignment_helper); // Rouge
+		WriteData<2>((void*)0x0072885a, (char)0x90);
+
+		WriteCall((void*)0x00740e47, upgrade_assignment_helper); // EWalker
+		WriteData<2>((void*)0x00740e4c, (char)0x90);
+
+		WriteCall((void*)0x007410a7, upgrade_assignment_helper); // TWalker
+		WriteData<2>((void*)0x007410ac, (char)0x90);
 
 		void (*case6_ptr)() = &menu_stage_select_case6_thunk;
 		void (*case7_ptr)() = &menu_stage_select_case7_thunk;
