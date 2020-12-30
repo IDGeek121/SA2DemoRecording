@@ -9,6 +9,16 @@
 #include "ReplayMeta.h"
 #include "StageSelectMode.h"
 
+#define PROLOG_EPILOG(x) __asm \
+{                              \
+	__asm pushfd               \
+	__asm pushad               \
+    __asm call x               \
+	__asm popad                \
+	__asm popfd                \
+    __asm ret                  \
+}
+
 int nextDemoState = 0;
 
 extern char replayName[256];
@@ -23,17 +33,9 @@ FunctionPointer(void, FUN_0043d5d0, (), 0x0043d5d0);
 
 DataPointer(char*, demoString, 0x008b9110);
 
-void* ADDR_0044caf2 = (void*)0x0044caf2;
 void* ADDR_004421c3 = (void*)0x004421c3;
-void* ADDR_0043a75a = (void*)0x0043a75a;
-void* ADDR_0043d837 = (void*)0x0043d837;
-void* ADDR_00678407 = (void*)0x00678407;
 void* ADDR_00454594 = (void*)0x00454594;
 void* ADDR_0045459e = (void*)0x0045459e;
-void* ADDR_00672a66 = (void*)0x00672a66;
-
-void* ADDR_00672ae1 = (void*)0x00672ae1;
-
 void* ADDR_004545af = (void*)0x004545af;
 
 uint32_t replayOffset;
@@ -63,32 +65,18 @@ static inline void byteswap_replay_buffer(void* buffer)
 
 void __declspec(naked dllexport) menu_stage_select_case6_thunk()
 {
-	__asm
-	{
-		pushfd
-		pushad
-		call menu_stage_select_case6
-		popad
-		popfd
-		jmp ADDR_00672ae1
-	}
+	__asm push 0x00672ae1
+	PROLOG_EPILOG(menu_stage_select_case6)
 }
 
 void __declspec(naked dllexport) menu_stage_select_case7_thunk()
 {
-	__asm
-	{
-		pushfd
-		pushad
-		call menu_stage_select_case7
-		popad
-		popfd
-		jmp ADDR_00672ae1
-	}
+	__asm push 0x00672ae1
+	PROLOG_EPILOG(menu_stage_select_case7)
 }
 
 
-void __cdecl write_replay_buffer_thunk()
+void write_replay_buffer_thunk()
 {
 	if (DemoState == 2)
 	{
@@ -112,7 +100,7 @@ void __cdecl write_replay_buffer_thunk()
 	}
 }
 
-void __cdecl update_reset_replay_offset()
+void update_reset_replay_offset()
 {
 	if (GameState == 3)
 	{
@@ -125,7 +113,7 @@ void __cdecl update_reset_replay_offset()
 	FrameCountIngame = 0;
 }
 
-void __cdecl update_replay_offset()
+void update_replay_offset()
 {
 	replayOffset += FrameCountIngame;
 	FrameCountIngame = 0;
@@ -133,41 +121,20 @@ void __cdecl update_replay_offset()
 
 void __declspec(naked) fuckin_get_the_level_counter_before_it_goes_away()
 {
-	__asm
-	{
-		pushfd
-		pushad
-		call update_reset_replay_offset
-		popad
-		popfd
-		jmp ADDR_0044caf2
-	}
+	__asm push 0x0044caf2 // return address
+	PROLOG_EPILOG(update_reset_replay_offset)
 }
 
 void __declspec(naked) fuckin_get_the_level_counter_before_it_goes_away2()
 {
-	__asm
-	{
-		pushfd
-		pushad
-		call update_replay_offset
-		popad
-		popfd
-		jmp ADDR_0043d837
-	}
+	__asm push 0x0043d837 // return address
+	PROLOG_EPILOG(update_replay_offset)
 }
 
 void __declspec(naked) go_to_next_level_thunk()
 {
-	__asm
-	{
-		pushfd
-		pushad
-		call write_replay_buffer_thunk
-		popad
-		popfd
-		jmp FUN_0043d5d0
-	}
+	__asm push 0x0043d5d0 // return address
+	PROLOG_EPILOG(write_replay_buffer_thunk)
 }
 
 int __declspec(naked) add_replay_offset()
@@ -210,13 +177,9 @@ void __declspec(naked) write_file_with_replay_offset()
 		mov edx, dword ptr [FrameCountIngame]
 		mov [edx], eax
 		pop edx
-		pushfd
-		pushad
-		call byteswap_replay_buffer_wrapper
-		popad
-		popfd
-		jmp ADDR_0043a75a
+		push 0x0043a75a // return address
 	}
+	PROLOG_EPILOG(byteswap_replay_buffer_wrapper)
 }
 
 void __cdecl set_demo_state()
@@ -244,28 +207,14 @@ void __cdecl set_next_demo_state()
 
 void __declspec(naked) set_next_demo_state_thunk()
 {
-	__asm
-	{
-		pushfd
-		pushad
-		call set_next_demo_state
-		popad
-		popfd
-		jmp ADDR_00672a66
-	}
+	__asm push 0x00672a66 // return address
+	PROLOG_EPILOG(set_next_demo_state)
 }
 
 void __declspec(naked) set_demo_state_thunk()
 {
-	__asm
-	{
-		pushfd
-		pushad
-		call set_demo_state
-		popad
-		popfd
-		jmp ADDR_00678407
-	}
+	__asm push 0x00678407 // return address
+	PROLOG_EPILOG(set_demo_state)
 }
 
 void __declspec(naked) load_demo_thunk()
@@ -284,8 +233,6 @@ void __declspec(naked) load_demo_thunk()
 			push eax
 			push replayNamePointer
 			mov edx, dword ptr replayNameInGamePointer
-			//mov [esp + 0x14], edx
-			//lea edx, [esp + 0x14]
 			push customDemoString
 			jmp ADDR_0045459e
 		}
@@ -455,42 +402,22 @@ void upgrade_assignment()
 	}
 }
 
+void __declspec(naked) upgrade_assignment_helper()
+{
+	PROLOG_EPILOG(upgrade_assignment)
+}
+
 void __declspec(naked) upgrade_assignment_helper_andknuckles()
 {
-	// Uses a jump, but we're gonna fix it so it looks like a call
 	__asm
 	{
 		// Replace clobbered instructions
 		pop edi
 		pop esi
 
-		push 0x00728411 // set return address so it's like a function call
+		push 0x00728411 // return address
 
-		pushfd
-		pushad
-	}
-	upgrade_assignment();
-	__asm
-	{
-		popad
-		popfd
-		ret
-	}
-}
-
-void __declspec(naked) upgrade_assignment_helper()
-{
-	__asm
-	{
-		pushfd
-		pushad
-	}
-	upgrade_assignment();
-	__asm
-	{
-		popad
-		popfd
-		ret
+		jmp upgrade_assignment_helper
 	}
 }
 
@@ -529,7 +456,9 @@ extern "C"
 		WriteJump((void*)0x0045458f, load_demo_thunk);
 		WriteJump((void*)0x004545a9, load_demo_thunk_2);
 
-		// Call our custom function for setting upgrades, and NOP as appropriate
+		/*************************************************************************/
+		/* Call our custom function for setting upgrades, and NOP as appropriate */
+		/*************************************************************************/
 		WriteCall((void*)0x00717090, upgrade_assignment_helper); // Sonic
 		WriteData<2>((void*)0x00717095, (char)0x90);
 
@@ -546,13 +475,13 @@ extern "C"
 
 		WriteCall((void*)0x007410a7, upgrade_assignment_helper); // TWalker
 		WriteData<2>((void*)0x007410ac, (char)0x90);
-
+		/***************************************************************************/
+		/* Modify jump table to add states 6 and 7 to the Stage Select state table */
+		/***************************************************************************/
 		void (*case6_ptr)() = &menu_stage_select_case6_thunk;
 		void (*case7_ptr)() = &menu_stage_select_case7_thunk;
 		WriteData((void*)0x00672b04, &case6_ptr, 4);
 		WriteData((void*)0x00672b08, &case7_ptr, 4);
-
-		// Increase size of jump table for stage select menu
 		WriteData<1>((void*)0x0067276f, (char)0x07);
 	}
 }

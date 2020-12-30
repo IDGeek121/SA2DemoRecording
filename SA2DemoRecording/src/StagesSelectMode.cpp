@@ -1,6 +1,4 @@
-#include <iostream>
 #include <vector>
-#include <cstring>
 
 #include "SA2ModLoader.h"
 #include "ReplayMeta.h"
@@ -8,7 +6,7 @@
 #include "StageSelectMode.h"
 
 std::vector<ReplayMeta> replayList;
-int replayListIndex;
+size_t replayListIndex;
 int previousIndex;
 
 char replayName[256] = { 0 };
@@ -57,7 +55,6 @@ void menu_stage_select_case7()
 	{
 		currentReplay = replayList[replayListIndex];
 		strncpy_s(replayName, 256, currentReplay.file.c_str(), currentReplay.file.length() + 1);
-		//strncpy_s(replayName, 256, replayList[replayListIndex].file.c_str(), replayList[replayListIndex].file.length() + 1);
 		nextDemoState = 1;
 		isLoadingCustomDemo = true;
 		CurrentSubMenu = 5;

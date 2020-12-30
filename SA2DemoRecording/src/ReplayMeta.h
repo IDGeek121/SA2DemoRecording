@@ -1,6 +1,7 @@
 #pragma once
 #ifndef REPLAYMETA_H
 #define REPLAYMETA_H
+#include <string>
 
 class ReplayMeta {
 public:
