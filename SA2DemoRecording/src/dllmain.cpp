@@ -32,6 +32,7 @@ FunctionPointer(int, sa2_sprintf, (char*, const char*, ...), 0x7a7c6d);
 FunctionPointer(void, FUN_0043d5d0, (), 0x0043d5d0);
 
 DataPointer(char*, demoString, 0x008b9110);
+DataPointer(short, timesRestartedOrDied, 0x01934be8);
 
 void* ADDR_004421c3 = (void*)0x004421c3;
 void* ADDR_00454594 = (void*)0x00454594;
@@ -95,7 +96,7 @@ void write_replay_buffer_thunk()
         PrintDebug("Writing demo file to %s", replayname.c_str());
         write_replay_buffer(replayname.c_str());
         PrintDebug("Writing demo metafile to %s", metaname.c_str());
-        ReplayMeta::write_replay_metafile("test", "test", currentReplay.upgradeBitfield, CurrentCharacter, CurrentLevel, FrameCount, filename.str().c_str(), metaname.c_str());
+        ReplayMeta::write_replay_metafile("test", "test", currentReplay.upgradeBitfield, CurrentCharacter, CurrentLevel, currentReplay.framecount, filename.str().c_str(), metaname.c_str());
         DemoState = 0;
     }
 }
@@ -421,6 +422,83 @@ void __declspec(naked) upgrade_assignment_helper_andknuckles()
     }
 }
 
+void __declspec(naked) upgrade_text_skip()
+{
+    __asm
+    {
+        pushfd
+        pushad
+    }
+    if (Controllers[0].press & Buttons_A)
+    {
+        __asm
+        {
+            popad
+            popfd
+            push 0x006b71ad
+            ret
+        }
+    }
+    else
+    {
+        __asm
+        {
+            popad
+            popfd
+            lea eax, [eax * 0x4 + 0x4]
+            push 0x006b719a
+            ret
+        }
+    }
+}
+
+int tempFramecount = 0;
+int tempGlobalFramecount = 0;
+int tempGlobalFramecountDiff = 0;
+
+void __declspec(naked) emerald_stuff()
+{
+    __asm
+    {
+        push 0x007380c5
+        pushfd
+        pushad
+    }
+    switch (DemoState)
+    {
+    case 0:
+    {
+        tempFramecount = FrameCount;
+        break;
+    }
+    case 2:
+    {
+        if (timesRestartedOrDied == 0)
+        {
+            currentReplay.framecount = FrameCount;
+        }
+    }
+    case 1:
+    {
+        if (timesRestartedOrDied == 0)
+        {
+            tempGlobalFramecount = FrameCount;
+        }
+        tempGlobalFramecountDiff = FrameCount - tempGlobalFramecount;
+        tempFramecount = currentReplay.framecount + tempGlobalFramecountDiff;
+        break;
+    }
+    default: break;
+    }
+    __asm
+    {
+        popad
+        popfd
+        mov edi, tempFramecount
+        ret
+    }
+}
+
 extern "C"
 {
     __declspec(dllexport) ModInfo SA2ModInfo = { ModLoaderVer };
@@ -483,5 +561,17 @@ extern "C"
         WriteData((void*)0x00672b04, &case6_ptr, 4);
         WriteData((void*)0x00672b08, &case7_ptr, 4);
         WriteData<1>((void*)0x0067276f, (char)0x07);
+
+        WriteJump((void*)0x006b7193, upgrade_text_skip);
+
+        // Control during upgrade text
+        WriteData<7>((void*)0x006d89db, (char)0x90);
+
+
+        // Emerald stuff...
+        WriteData<7>((void*)0x007380b0, (char)0x90);
+        WriteData<2>((void*)0x007380bd, (char)0x90);
+        WriteJump((void*)0x007380bf, emerald_stuff);
+        WriteData<1>((void*)0x007380c4, (char)0x90);
     }
 }
