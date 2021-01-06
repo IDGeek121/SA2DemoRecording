@@ -30,6 +30,8 @@ Once the level is completed, a replay file (struct compatible with the attract m
 
 ## Build
 1. Install VS2019
+1. `git clone --recurse-submodules https://github.com/IDGeek121/SA2DemoRecording.git`
+    - You must use the `--recurse-submodules` argument, as the SA2 Mod Loader headers are stored in that repo.
 1. Open [SA2DemoRecording.sln](https://github.com/IDGeek121/SA2DemoRecording/blob/main/SA2DemoRecording.sln)
 1. Build for x86
 
