@@ -9,6 +9,8 @@
 #include "ReplayMeta.h"
 #include "StageSelectMode.h"
 
+static_assert (sizeof(DemoInput) == 0x2c, "Size is not correct");
+
 #define PROLOG_EPILOG(x) __asm \
 {                              \
     __asm pushfd               \
@@ -28,41 +30,22 @@ char* replayNameInGamePointer = (char*)&replayNameInGame;
 
 extern ReplayMeta currentReplay;
 
-FunctionPointer(int, sa2_sprintf, (char*, const char*, ...), 0x7a7c6d);
-FunctionPointer(void, FUN_0043d5d0, (), 0x0043d5d0);
+void* ADDR_004421c3 = reinterpret_cast<void*>(0x004421c3);
+void* ADDR_00454594 = reinterpret_cast<void*>(0x00454594);
+void* ADDR_0045459e = reinterpret_cast<void*>(0x0045459e);
+void* ADDR_004545af = reinterpret_cast<void*>(0x004545af);
 
-DataPointer(char*, demoString, 0x008b9110);
-DataPointer(short, timesRestartedOrDied, 0x01934be8);
-
-void* ADDR_004421c3 = (void*)0x004421c3;
-void* ADDR_00454594 = (void*)0x00454594;
-void* ADDR_0045459e = (void*)0x0045459e;
-void* ADDR_004545af = (void*)0x004545af;
-
-uint32_t replayOffset;
+uint32_t replay_offset;
 bool isLoadingCustomDemo;
 
 const char* customDemoString = "Demos/%s.bin";
 
-static const void* const write_replay_buffer_ptr = (void*)0x0043a730;
-static inline void write_replay_buffer(const char* filename)
-{
-    __asm
-    {
-        mov edi, [filename]
-        call write_replay_buffer_ptr
-    }
-}
+struct PolygonPoint {
+    NJS_POINT3 pos;
+    NJS_COLOR color;
+};
 
-static const void* const byteswap_replay_buffer_ptr = (void*)0x00454450;
-static inline void byteswap_replay_buffer(void* buffer)
-{
-    __asm
-    {
-        mov eax, [buffer]
-        call byteswap_replay_buffer_ptr
-    }
-}
+PolygonPoint coolSquare[4] = { 0 };
 
 void __declspec(naked dllexport) menu_stage_select_case6_thunk()
 {
@@ -81,22 +64,25 @@ void write_replay_buffer_thunk()
 {
     if (DemoState == 2)
     {
-        std::ostringstream filename;
-        std::time_t currentTime = std::time(NULL);
-        std::tm testTime;
-        gmtime_s(&testTime, &currentTime);
+        constexpr NJS_COLOR text_color = { 0xffffffff };
+        DrawCustomText("Writing replay file", 320.f, 240.f, 1, &text_color);
+
+        std::ostringstream file_name;
+        const std::time_t current_time = std::time(nullptr);
+        std::tm test_time;
+        gmtime_s(&test_time, &current_time);
 
         std::ios state(nullptr);
         state.copyfmt(std::cout);
-        filename << "demo" << std::setfill('0') <<  std::setw(2) << CurrentLevel << "_" << std::put_time(&testTime, "%F_%H-%M-%S");
+        file_name << "demo" << std::setfill('0') <<  std::setw(2) << CurrentLevel << "_" << std::put_time(&test_time, "%F_%H-%M-%S");
         std::cout.copyfmt(state);
-        std::string demoFolder = "resource/gd_PC/Demos/";
-        std::string metaname = demoFolder + filename.str() + ".ini";
-        std::string replayname = demoFolder + filename.str() + ".bin";
-        PrintDebug("Writing demo file to %s", replayname.c_str());
-        write_replay_buffer(replayname.c_str());
-        PrintDebug("Writing demo metafile to %s", metaname.c_str());
-        ReplayMeta::write_replay_metafile("test", "test", currentReplay.upgradeBitfield, CurrentCharacter, CurrentLevel, currentReplay.framecount, filename.str().c_str(), metaname.c_str());
+        const std::string demo_folder = "resource/gd_PC/Demos/";
+        const std::string meta_name = demo_folder + file_name.str() + ".ini";
+        const std::string replay_name = demo_folder + file_name.str() + ".bin";
+        PrintDebug("Writing demo file to %s", replay_name.c_str());
+        WriteDemoBufferToFile(replay_name.c_str());
+        PrintDebug("Writing demo metafile to %s", meta_name.c_str());
+        ReplayMeta::write_replay_metafile("test", "test", currentReplay.upgradeBitfield, CurrentCharacter, CurrentLevel, currentReplay.framecount, file_name.str().c_str(), meta_name.c_str());
         DemoState = 0;
     }
 }
@@ -105,18 +91,18 @@ void update_reset_replay_offset()
 {
     if (GameState == 3)
     {
-        replayOffset = 0;
+        replay_offset = 0;
     }
     else
     {
-        replayOffset += FrameCountIngame;
+        replay_offset += FrameCountIngame;
     }
     FrameCountIngame = 0;
 }
 
 void update_replay_offset()
 {
-    replayOffset += FrameCountIngame;
+    replay_offset += FrameCountIngame;
     FrameCountIngame = 0;
 }
 
@@ -144,7 +130,7 @@ int __declspec(naked) add_replay_offset()
     {
         mov eax, dword ptr [FrameCountIngame]
         mov eax, [eax]
-        add eax, [replayOffset]
+        add eax, [replay_offset]
         ret
     }
 }
@@ -160,12 +146,12 @@ void __declspec(naked) buffer_with_replay_offset()
 
 void __cdecl byteswap_replay_buffer_wrapper()
 {
-    int endOfValidBuffer = FrameCountIngame;
-    int* buffer = (int*)0x024cfe20;
-    for (int x = 0; x < endOfValidBuffer; x++)
+    const int end_of_valid_buffer = FrameCountIngame;
+    DemoInput* buffer = reinterpret_cast<DemoInput*>(&DemoBuffer);
+    for (int i = 0; i < end_of_valid_buffer; i++)
     {
-        byteswap_replay_buffer(buffer);
-        buffer += 11;
+        ByteswapDemoInput(buffer);
+        buffer++;
     }
 }
 
@@ -188,29 +174,60 @@ void __cdecl set_demo_state()
     DemoState = nextDemoState;
 }
 
-void __cdecl set_next_demo_state()
+FunctionPointer(void, sub_00673ae0, (), 0x00673ae0);
+
+void __declspec(naked) set_next_demo_state()
 {
+    __asm
+    {
+        pushfd
+        pushad
+    }
     if (MenuButtons_Held[0] & Buttons_Y)
     {
         CurrentSubMenu = 6;
+        __asm
+        {
+            popad
+            popfd
+            mov ebx, 0x1
+            ret
+        }
     }
     else if (MenuButtons_Held[0] & Buttons_X)
     {
         nextDemoState = 2;
         CurrentSubMenu = 5;
+
+        __asm
+        {
+            popad
+            popfd
+            call sub_00673ae0
+            ret
+        }
     }
     else
     {
         nextDemoState = 0;
         CurrentSubMenu = 5;
+        __asm
+        {
+            popad
+            popfd
+            call sub_00673ae0
+            ret
+        }
     }
 }
 
+/*
 void __declspec(naked) set_next_demo_state_thunk()
 {
     __asm push 0x00672a66 // return address
     PROLOG_EPILOG(set_next_demo_state)
 }
+*/
 
 void __declspec(naked) set_demo_state_thunk()
 {
@@ -297,7 +314,8 @@ void upgrade_assignment()
             // To get the upgrade platforms to work, we need to set the appropriate byte
             // in the save data
             UINT32 workingBitfield = currentReplay.upgradeBitfield;
-            char *upgradePointer = nullptr, *upgradeEnd = nullptr;
+            char* upgradePointer = nullptr;
+            char* upgradeEnd = nullptr;
 
             // Set the start/end pointer for UpgradeGot bytes, and shift the upgrade
             // bitfield to the starting bit of the appropriate character's upgrades
@@ -456,7 +474,7 @@ int tempFramecount = 0;
 int tempGlobalFramecount = 0;
 int tempGlobalFramecountDiff = 0;
 
-void __declspec(naked) emerald_stuff()
+void __declspec(naked) set_num_rand_calls_hunting()
 {
     __asm
     {
@@ -473,14 +491,15 @@ void __declspec(naked) emerald_stuff()
     }
     case 2:
     {
-        if (timesRestartedOrDied == 0)
+        if (TimesRestartedOrDied == 0)
         {
             currentReplay.framecount = FrameCount;
         }
+        [[fallthrough]];
     }
     case 1:
     {
-        if (timesRestartedOrDied == 0)
+        if (TimesRestartedOrDied == 0)
         {
             tempGlobalFramecount = FrameCount;
         }
@@ -499,36 +518,76 @@ void __declspec(naked) emerald_stuff()
     }
 }
 
+void replay_watermark_helper()
+{
+    constexpr NJS_COLOR textColor = { .argb = { 0xff, 0xff, 0xff, 0x7f } };
+    // Draw every 32 frames
+    if ((replay_offset & 0xff) == 0)
+    {
+        constexpr uint8_t timer = 0xff;
+        switch (DemoState)
+        {
+        case 1:
+        {
+            DrawCustomText("Playback", 0.f, 0.f, timer, &textColor);
+            break;
+        }
+        case 2:
+        {
+            DrawCustomText("Recording", 0.f, 0.f, timer, &textColor);
+            break;
+        }
+        default: break;
+        }
+    }
+}
+
+void __declspec(naked) replay_watermark()
+{
+    __asm push 0x0043d1f3 // return address
+    PROLOG_EPILOG(replay_watermark_helper)
+}
+
+
+PolygonPoint test[4];
+
 extern "C"
 {
     __declspec(dllexport) ModInfo SA2ModInfo = { ModLoaderVer };
 
     __declspec(dllexport) void __cdecl Init(const char* path, const HelperFunctions& helperFunctions)
     {
-        replayOffset = 0;
+        coolSquare[0] = { 100.0f, 100.0f, .9f, 0xa00000ff };
+        coolSquare[1] = { 100.0f, 380.0f, .9f, 0xa00000ff };
+        coolSquare[2] = { 540.0f, 100.0f, .9f, 0xa00000ff };
+        coolSquare[3] = { 540.0f, 380.0f, .9f, 0xa00000ff };
+
+        replay_offset = 0;
         isLoadingCustomDemo = false;
 
         // Add call to write replay file in single player mode
-        WriteCall((void*)0x0043bc77, go_to_next_level_thunk);
+        WriteCall((void*)0x0043bc77, reinterpret_cast<void *>(go_to_next_level_thunk));
 
         // Write call to grab the frame count before it resets
         WriteJump((void*)0x0044cae8, fuckin_get_the_level_counter_before_it_goes_away);
         WriteJump((void*)0x0043d82d, fuckin_get_the_level_counter_before_it_goes_away2);
 
-        // Write/Read from the demo buffer based on replayOffset
+        // Write/Read from the demo buffer based on replay_offset
         WriteJump((void*)0x004421be, buffer_with_replay_offset);
 
-        // Write to file based on replayOffset
+        // Write to file based on replay_offset
         WriteJump((void*)0x0043a755, write_file_with_replay_offset);
 
-        // Remove code that prevents pausing and flashes the Start text and exits on death
+        // Skip code that prevents pausing
         WriteJump((void*)0x0043d063, (void*)0x0043d0ae);
-        WriteJump((void*)0x0043d15f, (void*)0x0043d1f3);
+
+        // Flash my own custom text when recording/playing back
+        WriteJump((void*)0x0043d15f, replay_watermark);
 
         // Set demo state on level start depending on button inputs
         WriteJump((void*)0x00678401, set_demo_state_thunk);
         // Set demo state on level start depending on button inputs
-        WriteJump((void*)0x00672a5c, set_next_demo_state_thunk);
+        //WriteJump((void*)0x00672a5c, set_next_demo_state_thunk);
 
         // Function controlling the logic for loading title demos vs. custom demos
         WriteJump((void*)0x0045458f, load_demo_thunk);
@@ -567,11 +626,19 @@ extern "C"
         // Control during upgrade text
         WriteData<7>((void*)0x006d89db, (char)0x90);
 
+        /***************************************************************************/
+        /* Emerald stuff                                                           */
+        /***************************************************************************/
+        // Remove cmp/jump for if DemoState != 0
+        WriteData<7>((void*)0x007380b0, (char)0x90); // NOP cmp [DemoState] 0x0
+        WriteData<2>((void*)0x007380bd, (char)0x90); // NOP jnz 0x007380da
 
-        // Emerald stuff...
-        WriteData<7>((void*)0x007380b0, (char)0x90);
-        WriteData<2>((void*)0x007380bd, (char)0x90);
-        WriteJump((void*)0x007380bf, emerald_stuff);
-        WriteData<1>((void*)0x007380c4, (char)0x90);
+        WriteJump((void*)0x007380bf, set_num_rand_calls_hunting); // sets edi to the desired value
+
+        WriteData<1>((void*)0x007380c4, (char)0x90); // NOP leftover byte
+
+        // Some unloading stuff...
+        WriteData<10>((void*)0x00672a5c, (char)0x90);
+        WriteCall((void*)0x0672a37, set_next_demo_state);
     }
 }

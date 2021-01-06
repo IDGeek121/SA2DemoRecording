@@ -15,7 +15,7 @@ ReplayMeta::ReplayMeta(const char* filename)
     this->character_p2 = 0;
     this->level = 0;
     this->framecount = 0;
-    if (filename != NULL)
+    if (filename != nullptr)
     {
         this->read_replay_metafile(filename);
     }

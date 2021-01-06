@@ -71,15 +71,31 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
+    <CodeAnalysisRuleSet>cppcore.ruleset</CodeAnalysisRuleSet>
+    <EnableMicrosoftCodeAnalysis>true</EnableMicrosoftCodeAnalysis>
+    <EnableClangTidyCodeAnalysis>false</EnableClangTidyCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
+    <CodeAnalysisRuleSet>cppcore.ruleset</CodeAnalysisRuleSet>
+    <EnableMicrosoftCodeAnalysis>true</EnableMicrosoftCodeAnalysis>
+    <EnableClangTidyCodeAnalysis>false</EnableClangTidyCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
+    <CodeAnalysisRuleSet>cppcore.ruleset</CodeAnalysisRuleSet>
+    <EnableMicrosoftCodeAnalysis>true</EnableMicrosoftCodeAnalysis>
+    <EnableClangTidyCodeAnalysis>false</EnableClangTidyCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
+    <CodeAnalysisRuleSet>cppcore.ruleset</CodeAnalysisRuleSet>
+    <EnableMicrosoftCodeAnalysis>true</EnableMicrosoftCodeAnalysis>
+    <EnableClangTidyCodeAnalysis>false</EnableClangTidyCodeAnalysis>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -89,6 +105,8 @@
       <ConformanceMode>true</ConformanceMode>
       <AssemblerOutput>AssemblyCode</AssemblerOutput>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <EnablePREfast>false</EnablePREfast>
+      <AdditionalIncludeDirectories>$(SolutionDir)sa2-mod-loader\SA2ModLoader\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -103,6 +121,8 @@
       <ConformanceMode>true</ConformanceMode>
       <AssemblerOutput>AssemblyCode</AssemblerOutput>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <EnablePREfast>false</EnablePREfast>
+      <AdditionalIncludeDirectories>$(SolutionDir)sa2-mod-loader\SA2ModLoader\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -119,6 +139,8 @@
       <ConformanceMode>true</ConformanceMode>
       <AssemblerOutput>AssemblyCode</AssemblerOutput>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <EnablePREfast>false</EnablePREfast>
+      <AdditionalIncludeDirectories>$(SolutionDir)sa2-mod-loader\SA2ModLoader\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -137,6 +159,8 @@
       <ConformanceMode>true</ConformanceMode>
       <AssemblerOutput>AssemblyCode</AssemblerOutput>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <EnablePREfast>false</EnablePREfast>
+      <AdditionalIncludeDirectories>$(SolutionDir)sa2-mod-loader\SA2ModLoader\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
