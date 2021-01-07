@@ -474,6 +474,10 @@ int tempFramecount = 0;
 int tempGlobalFramecount = 0;
 int tempGlobalFramecountDiff = 0;
 
+VoidFunc(sa2_rand, 0x7A89D8);
+
+uint8_t rand_table[91] = { 0 };
+
 void __declspec(naked) set_num_rand_calls_hunting()
 {
     __asm
@@ -501,6 +505,8 @@ void __declspec(naked) set_num_rand_calls_hunting()
     {
         if (TimesRestartedOrDied == 0)
         {
+            for (int i = 0; i < rand_table[static_cast<unsigned short>(CurrentLevel)]; i++)
+                sa2_rand();
             tempGlobalFramecount = FrameCount;
         }
         tempGlobalFramecountDiff = FrameCount - tempGlobalFramecount;
@@ -548,8 +554,7 @@ void __declspec(naked) replay_watermark()
     PROLOG_EPILOG(replay_watermark_helper)
 }
 
-
-PolygonPoint test[4];
+DataPointer(ef_message*, MissionMessage, 0x1A5A3F4);
 
 extern "C"
 {
@@ -557,6 +562,16 @@ extern "C"
 
     __declspec(dllexport) void __cdecl Init(const char* path, const HelperFunctions& helperFunctions)
     {
+        rand_table[5] = 99;
+        rand_table[7] = 101;
+        rand_table[8] = 109;
+        rand_table[16] = 103;
+        rand_table[18] = 104;
+        rand_table[25] = 102;
+        rand_table[26] = 101;
+        rand_table[32] = 101;
+        rand_table[44] = 108;
+
         coolSquare[0] = { 100.0f, 100.0f, .9f, 0xa00000ff };
         coolSquare[1] = { 100.0f, 380.0f, .9f, 0xa00000ff };
         coolSquare[2] = { 540.0f, 100.0f, .9f, 0xa00000ff };
