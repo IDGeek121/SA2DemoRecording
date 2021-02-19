@@ -106,12 +106,17 @@
       <AssemblerOutput>AssemblyCode</AssemblerOutput>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <EnablePREfast>false</EnablePREfast>
-      <AdditionalIncludeDirectories>$(SolutionDir)sa2-mod-loader\SA2ModLoader\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)sa2-mod-loader\mod-loader-common\ModLoaderCommon\;$(SolutionDir)sa2-mod-loader\SA2ModLoader\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)sa2-mod-loader\mod-loader-common\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>ModLoaderCommon.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>copy /y $(TargetPath) "C:\Program Files (x86)\Steam\steamapps\common\Sonic Adventure 2\mods\SA2DemoRecording\SA2DemoRecording.dll"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -122,12 +127,17 @@
       <AssemblerOutput>AssemblyCode</AssemblerOutput>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <EnablePREfast>false</EnablePREfast>
-      <AdditionalIncludeDirectories>$(SolutionDir)sa2-mod-loader\SA2ModLoader\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)sa2-mod-loader\mod-loader-common\ModLoaderCommon\;$(SolutionDir)sa2-mod-loader\SA2ModLoader\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)sa2-mod-loader\mod-loader-common\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>ModLoaderCommon.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>copy /y $(TargetPath) "C:\Program Files (x86)\Steam\steamapps\common\Sonic Adventure 2\mods\SA2DemoRecording\SA2DemoRecording.dll"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -140,14 +150,19 @@
       <AssemblerOutput>AssemblyCode</AssemblerOutput>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <EnablePREfast>false</EnablePREfast>
-      <AdditionalIncludeDirectories>$(SolutionDir)sa2-mod-loader\SA2ModLoader\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)sa2-mod-loader\mod-loader-common\ModLoaderCommon\;$(SolutionDir)sa2-mod-loader\SA2ModLoader\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)sa2-mod-loader\mod-loader-common\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>ModLoaderCommon.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>copy /y $(TargetPath) "C:\Program Files (x86)\Steam\steamapps\common\Sonic Adventure 2\mods\SA2DemoRecording\SA2DemoRecording.dll"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -160,21 +175,31 @@
       <AssemblerOutput>AssemblyCode</AssemblerOutput>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <EnablePREfast>false</EnablePREfast>
-      <AdditionalIncludeDirectories>$(SolutionDir)sa2-mod-loader\SA2ModLoader\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)sa2-mod-loader\mod-loader-common\ModLoaderCommon\;$(SolutionDir)sa2-mod-loader\SA2ModLoader\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)sa2-mod-loader\mod-loader-common\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>ModLoaderCommon.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>copy /y $(TargetPath) "C:\Program Files (x86)\Steam\steamapps\common\Sonic Adventure 2\mods\SA2DemoRecording\SA2DemoRecording.dll"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Config.cpp" />
     <ClCompile Include="src\dllmain.cpp" />
+    <ClCompile Include="src\Hunting.cpp" />
     <ClCompile Include="src\ReplayMeta.cpp" />
     <ClCompile Include="src\StagesSelectMode.cpp" />
+    <ClCompile Include="src\Upgrade.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Config.h" />
+    <ClInclude Include="src\Hunting.h" />
     <ClInclude Include="src\MemAccess.h" />
     <ClInclude Include="src\ninja.h" />
     <ClInclude Include="src\njdef.h" />
@@ -185,6 +210,8 @@
     <ClInclude Include="src\SA2Structs.h" />
     <ClInclude Include="src\SA2Variables.h" />
     <ClInclude Include="src\StageSelectMode.h" />
+    <ClInclude Include="src\Upgrade.h" />
+    <ClInclude Include="src\SA2DemoRecordingUtil.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

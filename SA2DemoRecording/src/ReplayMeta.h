@@ -2,11 +2,11 @@
 #ifndef REPLAYMETA_H
 #define REPLAYMETA_H
 #include <string>
+#include <vector>
 
 class ReplayMeta {
 public:
-    std::string name;
-    std::string description;
+    std::string author;
     std::string file;
     uint32_t upgradeBitfield;
     uint32_t character_p1;
@@ -14,9 +14,8 @@ public:
     int framecount; // For RNG Purposes
     uint16_t level;
 
-public:
     ReplayMeta()
-        : name(), description(), upgradeBitfield(0), character_p1(0), character_p2(0), framecount(0), level(0), file()
+        : author(), upgradeBitfield(0), character_p1(0), character_p2(0), framecount(0), level(0), file()
     {
     }
     ReplayMeta(const char* filename);
@@ -27,8 +26,8 @@ public:
     /* Looks for all .ini files in a path and parses them as replaymeta files. */
     static std::vector<ReplayMeta> create_replaymeta_list(const char* path);
     /* Writes a replaymeta file to disk. */
-    static int write_replay_metafile(const char* name,
-        const char* description,
+    static int write_replay_metafile(
+        const char* author,
         uint32_t upgradeBitfield,
         uint32_t character_p1,
         uint16_t level,
