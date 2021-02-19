@@ -125,9 +125,7 @@ void __declspec(naked) upgrade_assignment_helper_andknuckles() {
 }
 
 void Upgrade::Init() {
-    /*************************************************************************/
-    /* Call our custom function for setting upgrades, and NOP as appropriate */
-    /*************************************************************************/
+    // Call our custom function for setting upgrades, and NOP as appropriate
     WriteCall(reinterpret_cast<void*>(0x00717090), upgrade_assignment_helper); // Sonic
     WriteData<2>(reinterpret_cast<void*>(0x00717095), unsigned char{ 0x90 });
 

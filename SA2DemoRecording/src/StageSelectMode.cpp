@@ -183,6 +183,7 @@ __declspec(naked) void set_next_demo_state() {
     }
     else if (MenuButtons_Held[0] & Buttons_X) {
         nextDemoState = 2;
+        isLoadingCustomDemo = true;
         CurrentSubMenu = 5;
 
         __asm {

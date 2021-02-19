@@ -1,3 +1,4 @@
+#pragma once
 #define PROLOG_EPILOG(x) __asm \
 {                              \
     __asm pushfd               \

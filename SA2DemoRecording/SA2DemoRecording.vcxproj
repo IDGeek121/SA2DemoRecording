@@ -193,13 +193,15 @@
     <ClCompile Include="src\Config.cpp" />
     <ClCompile Include="src\dllmain.cpp" />
     <ClCompile Include="src\Hunting.cpp" />
+    <ClCompile Include="src\InGame.cpp" />
     <ClCompile Include="src\ReplayMeta.cpp" />
-    <ClCompile Include="src\StagesSelectMode.cpp" />
+    <ClCompile Include="src\StageSelectMode.cpp" />
     <ClCompile Include="src\Upgrade.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Config.h" />
     <ClInclude Include="src\Hunting.h" />
+    <ClInclude Include="src\InGame.h" />
     <ClInclude Include="src\MemAccess.h" />
     <ClInclude Include="src\ninja.h" />
     <ClInclude Include="src\njdef.h" />

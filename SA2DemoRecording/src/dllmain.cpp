@@ -178,7 +178,6 @@ __declspec(naked) void read_demo_hook() {
         pushad
     }
     if (isLoadingCustomDemo) {
-        isLoadingCustomDemo = false;
         __asm {
             popad
             popfd
@@ -223,7 +222,6 @@ void __declspec(naked) upgrade_text_skip() {
 
 void replay_watermark_helper() {
     constexpr NJS_COLOR textColor = { .argb = { 0xff, 0xff, 0xff, 0x7f } };
-    // Draw every 32 frames
     constexpr uint8_t timer = 0x1;
     switch (DemoState) {
     case 1: {
@@ -240,8 +238,27 @@ void replay_watermark_helper() {
 }
 
 void __declspec(naked) replay_watermark() {
-    __asm push 0x0043d1f3 // return address
-    PROLOG_EPILOG(replay_watermark_helper)
+    __asm {
+        pushfd
+        pushad
+    }
+    if (isLoadingCustomDemo || GameState != GameStates_Ingame) {
+        __asm {
+            call replay_watermark_helper
+            popad
+            popfd
+            push 0x0043d1f3
+            ret
+        }
+    }
+    else {
+        __asm {
+            popad
+            popfd
+            push 0x0043d173
+            ret
+        }
+    }
 }
 
 /*
@@ -258,6 +275,48 @@ void __declspec(naked) skip_results_screen() {
     }
 }
 */
+
+__declspec(naked) void custom_pause_check() {
+    __asm {
+        pushfd
+        pushad
+    }
+    if (DemoState == 0 || isLoadingCustomDemo) {
+        __asm {
+            popad
+            popfd
+            push 0x0043d0ae
+            ret
+        }
+    }
+    else {
+        __asm {
+            popad
+            popfd
+            push 0x0043d065
+            ret
+        }
+    }
+}
+
+VoidFunc(sub_4431B0, 0x4431B0);
+
+void reset_demo_state_helper() {
+    isLoadingCustomDemo = false;
+    DemoState = 0;
+}
+
+__declspec(naked) void reset_demo_state() {
+    __asm {
+        pushfd
+        pushad
+        call reset_demo_state_helper
+        popad
+        popfd
+        jmp sub_4431B0
+    }
+}
+
 
 extern "C" {
     __declspec(dllexport) ModInfo SA2ModInfo = { ModLoaderVer };
@@ -293,10 +352,13 @@ extern "C" {
         WriteJump((void*)0x0043a755, write_file_with_replay_offset);
 
         // Skip code that prevents pausing
-        WriteJump(reinterpret_cast<void*>(0x0043d063), reinterpret_cast<void*>(0x0043d0ae));
+        WriteJump(reinterpret_cast<void*>(0x0043d05c), custom_pause_check);
 
-        // Flash my own custom text when recording/playing back
-        WriteJump((void*)0x0043d15f, replay_watermark);
+        // Display my own custom text when recording/playing back
+        WriteJump((void*)0x0043d165, replay_watermark);
+
+        // When exiting from pause, set CustomDemo flag and set demo state to 0 again
+        WriteCall(reinterpret_cast<void*>(0x43b3c7), reset_demo_state);
 
         // Function controlling the logic for loading title demos vs. custom demos
         WriteJump((void*)0x0045458f, init_demo_string);

@@ -8,36 +8,28 @@ int framecount_diff = 0;
 
 extern ReplayMeta current_replay;
 
-uint8_t rand_table[91] = { 0 };
+uint8_t rand_table[91] = { 0 }; // Stores the number of rand calls before emerald generation to get the expected 1024 set
 
-void __declspec(naked) set_num_rand_calls_hunting()
-{
-    __asm
-    {
+void __declspec(naked) set_num_rand_calls_hunting() {
+    __asm {
         push 0x007380c5
         pushfd
         pushad
     }
-    switch (DemoState)
-    {
-    case 0:
-    {
+    switch (DemoState) {
+    case 0: {
         framecount_out = FrameCount;
         break;
     }
-    case 2:
-    {
+    case 2: {
         if (TimesRestartedOrDied == 0)
-        {
             current_replay.framecount = FrameCount;
-        }
         [[fallthrough]];
     }
-    case 1:
-    {
-        if (TimesRestartedOrDied == 0)
-        {
-            for (int i = 0; i < rand_table[static_cast<unsigned short>(CurrentLevel)]; i++)
+    case 1: {
+        if (TimesRestartedOrDied == 0) {
+            uint8_t num_rand_calls = rand_table[static_cast<unsigned short>(CurrentLevel)];
+            for (int i = 0; i < num_rand_calls; i++)
                 sa2_rand();
             framecount_enter = FrameCount;
         }
@@ -47,8 +39,7 @@ void __declspec(naked) set_num_rand_calls_hunting()
     }
     default: break;
     }
-    __asm
-    {
+    __asm {
         popad
         popfd
         mov edi, framecount_out
@@ -57,24 +48,22 @@ void __declspec(naked) set_num_rand_calls_hunting()
 }
 
 void Hunting::Init() {
-    rand_table[5] = 99;
-    rand_table[7] = 101;
-    rand_table[8] = 109;
-    rand_table[16] = 103;
-    rand_table[18] = 104;
-    rand_table[25] = 102;
-    rand_table[26] = 101;
-    rand_table[32] = 101;
-    rand_table[44] = 108;
+    rand_table[LevelIDs_PumpkinHill] = 99;
+    rand_table[LevelIDs_AquaticMine] = 101;
+    rand_table[LevelIDs_SecurityHall] = 109;
+    rand_table[LevelIDs_WildCanyon] = 103;
+    rand_table[LevelIDs_DryLagoon] = 104;
+    rand_table[LevelIDs_DeathChamber] = 102;
+    rand_table[LevelIDs_EggQuarters] = 101;
+    rand_table[LevelIDs_MeteorHerd] = 101;
+    rand_table[LevelIDs_MadSpace] = 108;
 
-    /***************************************************************************/
-    /* Emerald stuff                                                           */
-    /***************************************************************************/
+    // The following writes/jumps hook right before the rand calls for emerald generation
     // Remove cmp/jump for if DemoState != 0
-    WriteData<7>((void*)0x007380b0, (char)0x90); // NOP cmp [DemoState] 0x0
-    WriteData<2>((void*)0x007380bd, (char)0x90); // NOP jnz 0x007380da
+    WriteData<7>(reinterpret_cast<void*>(0x007380b0), unsigned char{ 0x90 }); // NOP cmp [DemoState] 0x0
+    WriteData<2>(reinterpret_cast<void*>(0x007380bd), unsigned char{ 0x90 }); // NOP jnz 0x007380da
 
-    WriteJump((void*)0x007380bf, set_num_rand_calls_hunting); // sets edi to the desired value
+    WriteJump(reinterpret_cast<void*>(0x007380bf), set_num_rand_calls_hunting); // sets edi to the desired value
 
-    WriteData<1>((void*)0x007380c4, (char)0x90); // NOP leftover byte
+    WriteData<1>(reinterpret_cast<void*>(0x007380c4), unsigned char{ 0x90 }); // NOP leftover byte
 }

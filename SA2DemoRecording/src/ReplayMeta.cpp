@@ -18,8 +18,7 @@ ReplayMeta::ReplayMeta(const char* filename) {
         this->read_replay_metafile(filename);
 }
 
-std::vector<ReplayMeta> ReplayMeta::create_replaymeta_list(const char* path)
-{
+std::vector<ReplayMeta> ReplayMeta::create_replaymeta_list(const char* path) {
     std::vector<ReplayMeta> retList;
     for (const auto& entry : std::filesystem::directory_iterator(path)) {
         if (entry.path().string().ends_with(".ini"))
@@ -28,8 +27,7 @@ std::vector<ReplayMeta> ReplayMeta::create_replaymeta_list(const char* path)
     return retList;
 }
 
-std::string ReplayMeta::string()
-{
+std::string ReplayMeta::string() {
     std::ostringstream retString;
     retString << "Author: " << this->author << std::endl <<
         "Character: " << this->character_p1 << std::endl <<
@@ -41,8 +39,7 @@ std::string ReplayMeta::string()
     return retString.str();
 }
 
-int ReplayMeta::read_replay_metafile(const char* inFile)
-{
+int ReplayMeta::read_replay_metafile(const char* inFile) {
     std::ifstream replayFile;
     replayFile.open(inFile);
     if (!replayFile.is_open()) {
