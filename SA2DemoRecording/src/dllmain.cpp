@@ -14,8 +14,8 @@
 #include <string>
 
 static_assert (sizeof(DemoInput) == 0x2c, "Size is not correct");
-
-int nextDemoState = 0;
+static_assert (sizeof(ef_message) == 0x58, "Size of ef_message is not correct");
+static_assert (sizeof(ef_message_b) == 0x88, "Size of ef_message is not correct");
 
 extern char replayName[256];
 char* replayNamePointer = (char*)&replayName;
@@ -34,17 +34,16 @@ bool isLoadingCustomDemo;
 
 const char* customDemoString = "Demos/%s.bin";
 
-struct PolygonPoint {
-    NJS_POINT3 pos;
-    NJS_COLOR color;
-};
-
 PolygonPoint coolSquare[4] = { 0 };
 
 Config config;
 
+bool from_restart = false;
+
+DataPointer(ObjectMaster*, FunnyMessage, 0x1AEFD50);
+
 void write_replay_buffer_thunk() {
-    if (DemoState == 2) {
+    if (CurrentDemoState == DemoState_Recording) {
         constexpr NJS_COLOR text_color = { 0xffffffff };
         DrawCustomText("Writing replay file", 320.f, 240.f, 1, &text_color);
 
@@ -63,13 +62,13 @@ void write_replay_buffer_thunk() {
         PrintDebug("Writing demo file to %s", replay_name.c_str());
         WriteDemoBufferToFile(replay_name.c_str());
         PrintDebug("Writing demo metafile to %s", meta_name.c_str());
-        ReplayMeta::write_replay_metafile(config.author.c_str(), current_replay.upgradeBitfield, CurrentCharacter, CurrentLevel, current_replay.framecount, file_name.str().c_str(), meta_name.c_str());
-        DemoState = 0;
+        ReplayMeta::write_replay_metafile(config.author.c_str(), current_replay.upgradeBitfield, CurrentCharacter, CurrentLevel, current_replay.framecount, current_replay.restart, file_name.str().c_str(), meta_name.c_str());
+        CurrentDemoState = DemoState_None;
     }
 }
 
 void update_reset_replay_offset() {
-    if (GameState == 3) {
+    if (GameState == GameStates_LoadLevel || GameState == GameStates_LoadFinished) {
         replay_offset = 0;
     }
     else {
@@ -117,7 +116,7 @@ void __declspec(naked) buffer_with_replay_offset() {
 void __cdecl byteswap_replay_buffer_wrapper()
 {
     const int end_of_valid_buffer = FrameCountIngame;
-    DemoInput* buffer = reinterpret_cast<DemoInput*>(&DemoBuffer);
+    DemoInput* buffer = reinterpret_cast<DemoInput*>(&FileBuffer);
     for (int i = 0; i < end_of_valid_buffer; i++)
     {
         ByteswapDemoInput(buffer);
@@ -223,12 +222,12 @@ void __declspec(naked) upgrade_text_skip() {
 void replay_watermark_helper() {
     constexpr NJS_COLOR textColor = { .argb = { 0xff, 0xff, 0xff, 0x7f } };
     constexpr uint8_t timer = 0x1;
-    switch (DemoState) {
-    case 1: {
+    switch (CurrentDemoState) {
+    case DemoState_Playback: {
         DrawCustomText("Playback", 0.f, 0.f, timer, &textColor);
         break;
     }
-    case 2: {
+    case DemoState_Recording: {
         DrawCustomText("Recording", 0.f, 0.f, timer, &textColor);
         break;
     }
@@ -281,7 +280,7 @@ __declspec(naked) void custom_pause_check() {
         pushfd
         pushad
     }
-    if (DemoState == 0 || isLoadingCustomDemo) {
+    if (CurrentDemoState == DemoState_None || isLoadingCustomDemo) {
         __asm {
             popad
             popfd
@@ -302,8 +301,9 @@ __declspec(naked) void custom_pause_check() {
 VoidFunc(sub_4431B0, 0x4431B0);
 
 void reset_demo_state_helper() {
+    from_restart = false;
     isLoadingCustomDemo = false;
-    DemoState = 0;
+    CurrentDemoState = DemoState_None;
 }
 
 __declspec(naked) void reset_demo_state() {
@@ -314,6 +314,60 @@ __declspec(naked) void reset_demo_state() {
         popad
         popfd
         jmp sub_4431B0
+    }
+}
+
+__declspec(naked) void demo_camera_logic() {
+    __asm {
+        pushfd
+        pushad
+    }
+    if (CurrentDemoState == 1 && !isLoadingCustomDemo) {
+        __asm {
+            popad
+            popfd
+            push 0x453c32
+            ret
+        }
+    }
+    else {
+        __asm {
+            popad
+            popfd
+            push 0x453c2d
+            ret
+        }
+    }
+}
+
+__declspec(naked) void set_restart_flag() {
+    __asm {
+        mov current_replay.restart, 1
+        push 0x43c0b1
+        ret
+    }
+}
+
+VoidFunc(RestartPrep, 0x43C340);
+
+__declspec(naked) void check_if_should_restart() {
+    __asm {
+        cmp from_restart, 0
+        jz check_if_should_restart_end
+        push eax
+        mov eax, GameState
+        mov [eax], GameStates_NormalRestart;
+        pop eax
+        mov from_restart, 0
+        push eax
+        push ecx
+        call RestartPrep
+        pop ecx
+        pop eax
+    check_if_should_restart_end:
+        mov ebp, 0x5a
+        push 0x43aafd
+        ret
     }
 }
 
@@ -368,5 +422,14 @@ extern "C" {
 
         // Control during upgrade text
         WriteData<7>((void*)0x006d89db, (char)0x90);
+
+        // NOP demo cameras
+        WriteJump(reinterpret_cast<void*>(0x453c28), demo_camera_logic);
+
+        // Set from_restart when hitting restart
+        WriteJump(reinterpret_cast<void*>(0x43bb26), set_restart_flag);
+
+        // Check if need to restart
+        WriteJump(reinterpret_cast<void*>(0x43aaf8), check_if_should_restart);
     }
 }

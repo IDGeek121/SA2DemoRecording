@@ -8,8 +8,8 @@ extern ReplayMeta current_replay;
 extern bool isLoadingCustomDemo;
 
 void upgrade_assignment() {
-    switch (DemoState) {
-    case 1: {
+    switch (CurrentDemoState) {
+    case DemoState_Playback: {
         if (isLoadingCustomDemo) {
             // Apply upgrades to the character
             MainCharObj2[0]->Upgrades = current_replay.upgradeBitfield;

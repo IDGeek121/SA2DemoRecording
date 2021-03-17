@@ -16,17 +16,17 @@ void __declspec(naked) set_num_rand_calls_hunting() {
         pushfd
         pushad
     }
-    switch (DemoState) {
-    case 0: {
+    switch (CurrentDemoState) {
+    case DemoState_None: {
         framecount_out = FrameCount;
         break;
     }
-    case 2: {
+    case DemoState_Recording: {
         if (TimesRestartedOrDied == 0)
             current_replay.framecount = FrameCount;
         [[fallthrough]];
     }
-    case 1: {
+    case DemoState_Playback: {
         if (TimesRestartedOrDied == 0) {
             uint8_t num_rand_calls = rand_table[static_cast<unsigned short>(CurrentLevel)];
             for (int i = 0; i < num_rand_calls; i++)
@@ -59,8 +59,8 @@ void Hunting::Init() {
     rand_table[LevelIDs_MadSpace] = 108;
 
     // The following writes/jumps hook right before the rand calls for emerald generation
-    // Remove cmp/jump for if DemoState != 0
-    WriteData<7>(reinterpret_cast<void*>(0x007380b0), unsigned char{ 0x90 }); // NOP cmp [DemoState] 0x0
+    // Remove cmp/jump for if CurrentDemoState != 0
+    WriteData<7>(reinterpret_cast<void*>(0x007380b0), unsigned char{ 0x90 }); // NOP cmp [CurrentDemoState] 0x0
     WriteData<2>(reinterpret_cast<void*>(0x007380bd), unsigned char{ 0x90 }); // NOP jnz 0x007380da
 
     WriteJump(reinterpret_cast<void*>(0x007380bf), set_num_rand_calls_hunting); // sets edi to the desired value

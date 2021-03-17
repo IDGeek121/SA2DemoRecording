@@ -12,10 +12,11 @@ public:
     uint32_t character_p1;
     uint32_t character_p2;
     int framecount; // For RNG Purposes
+    bool restart; // true if replay should start with a restart. false if replay starts normally.
     uint16_t level;
 
     ReplayMeta()
-        : author(), upgradeBitfield(0), character_p1(0), character_p2(0), framecount(0), level(0), file()
+        : author(), upgradeBitfield(0), character_p1(0), character_p2(0), framecount(0), restart(false), level(0), file()
     {
     }
     ReplayMeta(const char* filename);
@@ -32,6 +33,7 @@ public:
         uint32_t character_p1,
         uint16_t level,
         int framecount,
+        bool restart,
         const char* file,
         const char* outFile
     );
